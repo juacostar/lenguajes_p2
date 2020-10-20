@@ -1,0 +1,149 @@
+prog:
+f main_prog
+
+f:
+fn_decl_list f
+EPSILUM
+
+fn_decl_list:
+FUNCTION FID TK_DOSPUNTOS dataype TK_PAR_IZQ [var_decl] TK_PAR_DER [VAR var_decl TK_PUNTOYCOMA] stmt_block
+
+[var_decl]:
+var_decl
+EPSILUM
+
+[VAR var_decl TK_PUNTOYCOMA]:
+VAR var_decl TK_PUNTOYCOMA
+EPSILUM
+
+main_prog:
+[var_decl] st TK_END
+
+st:
+stmt_block st
+EPSILUM
+
+dataype:
+NUM
+BOOL
+
+var_decl:
+ID TK_DOSPUNTOS DATATYPE list_decl
+
+list_decl:
+TK_COMA ID TK_DOSPUNTOS DATATYPE list_decl
+EPSILUM
+
+stmt_block:
+TK_LLAVE_IZQ stmt stm TK_LLAVE_DER 
+stmt
+
+stm:
+stmt
+EPSILUM
+
+stmt:
+PRINT lexpr TK_PUNTOYCOMA
+INPUT ID TK_PUNTOYCOMA
+WHEN TK_PAR_IZQ lexpr TK_PAR_DER DO stmt_block
+IF  lexpr  DO stmt_block ELSE stmt_block
+UNLESS TK_PAR_IZQ lexpr TK_PAR_DER DO stmt_block
+WHILE TK_PAR_IZQ lexpr TK_PAR_DER DO stmt_block 
+RETURN lexpr TK_PUNTOYCOMA 
+UNTIL TK_PAR_IZQ lexpr TK_PAR_DER DO stmt_block
+LOOP stmt_block
+DO stmt_block do_stmt
+REPEAT TK_NUM TK_DOSPUNTOS stmt_block
+FOR TK_PAR_IZQ lexpr TK_PUNTOYCOMA lexpr TK_PUNTOYCOMA lexpr TK_PAR_DER TK_DO stmt_block   
+NEXT TK_PUNTOYCOMA
+BREAK TK_PUNTOYCOMA
+ID expr
+TK_DECREMENTO ID TK_PUNTOYCOMA
+TK_INCREMENTO ID TK_PUNTOYCOMA
+
+do_stmt:
+WHILE TK_PAR_IZQ lexpr TK_PAR_DER
+UNTIL TK_PAR_IZQ lexpr TK_PAR_DER
+
+expr:
+TK_ASIGNACION lexpr TK_PUNTOYCOMA
+TK_SUM_ASIG lexpr TK_PUNTOYCOMA
+TK_RES_ASIG lexpr TK_PUNTOYCOMA
+TK_MUL_ASIG lexpr TK_PUNTOYCOMA
+TK_DIV_ASIG lexpr TK_PUNTOYCOMA
+TK_MOD_ASIG lexpr TK_PUNTOYCOMA
+TK_INCREMENTO TK_PUNTOYCOMA
+TK_DECREMENTO TK_PUNTOYCOMA
+
+
+lexpr:
+nexpr [[TK_AND nexpr]*|[TK_OR nexpr]*]
+
+[[TK_AND nexpr]*|[TK_OR nexpr]*]:
+[TK_AND nexpr]*
+[TK_OR nexpr]*
+EPSILUM
+
+[TK_AND nexpr]*:
+TK_AND nexpr [TK_AND nexpr]*
+EPSILUM
+
+[TK_OR nexpr]*:
+TK_OR nexpr [TK_OR nexpr]*
+EPSILUM
+
+nexpr:
+TK_NOT TK_PAR_IZQ lexpr TK_PAR_DER
+rexpr
+
+rexpr:
+simple_expr [(TK_MENOR|TK_IGUALDAD|TK_MENOR_IGUAL|TK_MAYOR|TK_MAYOR_IGUAL|TK_DIFERENTE)simple_expr]
+
+[(TK_MENOR|TK_IGUALDAD|TK_MENOR_IGUAL|TK_MAYOR|TK_MAYOR_IGUAL|TK_DIFERENTE)simple_expr]:
+TK_MENOR simple_expr
+TK_IGUALDAD simple_expr
+TK_MENOR_IGUAL simple_expr
+TK_MAYOR simple_expr
+TK_MAYOR_IGUAL
+TK_DIFERENTE
+EPSILUM
+
+simple_expr:
+term [(TK_MAS|TK_MENOS)term]*
+
+[(TK_MAS|TK_MENOS)term]*:
+TK_MAS term [(TK_MAS|TK_MENOS)term]
+TK_MENOS term [(TK_MAS|TK_MENOS)term]
+EPSILUM
+
+term:
+factor [(TK_MUL|TK_DIV|TK_MOD)factor]*
+
+[(TK_MUL|TK_DIV|TK_MOD)factor]*:
+TK_MUL factor [(TK_MUL|TK_DIV|TK_MOD)factor]*
+TK_DIV factor [(TK_MUL|TK_DIV|TK_MOD)factor]*
+TK_MOD factor [(TK_MUL|TK_DIV|TK_MOD)factor]*
+EPSILUM
+
+factor:
+TK_NUM
+TRUE
+FALSE
+ID [TK_INCREMENTO|TK_DECREMENTO]
+[TK_INCREMENTO|TK_DECREMENTO] ID
+ID
+TK_PAR_IZQ lexpr TK_PAR_DER 
+FID TK_PAR_IZQ [lexpr[TK_COMA lexpr]*] TK_PAR_DER
+
+[TK_INCREMENTO|TK_DECREMENTO]:
+TK_INCREMENTO
+TK_DECREMENTO
+EPSILUM
+
+[lexpr[TK_COMA lexpr]*]:
+lexpr [TK_COMA lexpr]*
+EPSILUM
+
+[TK_COMA lexpr]*:
+TK_COMA lexpr [TK_COMA lexpr]*
+EPSILUM
