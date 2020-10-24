@@ -11,8 +11,7 @@ import practica2.Token;
 import java.io.FileNotFoundException;
 import java.util.*;
 /*Practica 1 Lenguajes de programación
- * Juan Camilo Acosta Rojas
- * Juan Andres Gonzales Arias*/
+ * Juan Camilo Acosta Rojas*/
 
 
 public class Main {
@@ -479,7 +478,8 @@ public class Main {
         }
 
         analisis.leerGramatica();
-        analisis.analizar();
+        Generado generado = new Generado(analisis); // llama a las funciones generadas de los no terminales
+        generado.prog(analisis.getTokens().getFrontElement());
 
 
     }

@@ -55,6 +55,9 @@ public class AnalisisSintactico {
 
     }
 
+    public ArrayQueue<Token> getTokens() {
+        return tokens;
+    }
 
     public void leerGramatica(){
         try{
@@ -107,14 +110,20 @@ public class AnalisisSintactico {
     }
 
     public void imprimirSiguientes(){
-        for(int i=0;i<this.reglas.size();i++){
+        /*for(int i=0;i<this.reglas.size();i++){
             Set<String> primerosRegla = siguientes(this.reglas.get(i).getPar_izq());
             System.out.println("Siguientes de " + this.reglas.get(i).getPar_izq() + ":");
             for(String p : primerosRegla){
                 System.out.println(p);
             }
             System.out.println();
+        }*/
+        Set<String> siguientesRegla = siguientes(this.reglas.get(this.reglas.size()-1).getPar_izq());
+        System.out.println("Siguientes de " + this.reglas.get(this.reglas.size()-1).getPar_izq() + ":");
+        for(String p : siguientesRegla){
+            System.out.println(p);
         }
+        System.out.println();
     }
 
     public void imprimirPredicciones(){
@@ -126,6 +135,12 @@ public class AnalisisSintactico {
             }
             System.out.println();
         }
+        /*System.out.println("Conjunto de prediccion de " + this.reglas.get(this.reglas.size()-1).getPar_izq() + " => " + this.reglas.get(this.reglas.size()-1).getPar_der());
+        Set<String> conPred = prediccion(this.reglas.get(this.reglas.size()-1));
+        for(String p : conPred){
+            System.out.println(p);
+        }
+        System.out.println();*/
     }
 
 // fin
@@ -171,12 +186,14 @@ public class AnalisisSintactico {
 
     public Set<String> siguientes(String noTerminal){ // mirar primer simbolo de la gramatica OJO
         Set<String> siguientesSet = new HashSet<>();
-        ArrayList<Regla> prod =  apariciones(noTerminal);
+        ArrayList<Regla> prod =  apariciones(noTerminal); // reglas en las que aparecen el no terminal
         if(noTerminal.equals("prog")) siguientesSet.add("$");
         for(int i=0;i<prod.size();i++){
             String regla = prod.get(i).getPar_der().substring(prod.get(i).getPar_der().indexOf(noTerminal) + noTerminal.length()); // coge el substring desde despues del no terminal
             StringTokenizer linea = new StringTokenizer(regla);
-            if(linea.equals(null))siguientes(prod.get(i).getPar_izq()); // comprobar cuando no haya tokens, cuando sea el final de la producicon
+            if(regla.equals("") && !prod.get(i).getPar_izq().equals(noTerminal)){
+                siguientes(prod.get(i).getPar_izq()); // comprobar cuando no haya tokens, cuando sea el final de la produccion
+            }
             else{
                 while(linea.hasMoreTokens()){
                     String primera = linea.nextToken();
@@ -208,14 +225,19 @@ public class AnalisisSintactico {
         StringTokenizer st = new StringTokenizer(regla.getPar_der());
         while(st.hasMoreTokens()){
             String primera = st.nextToken();
-            if(esTerminal(primera)){
+            if(esTerminal(primera) && !esEpsilum(primera)){
                 predicciones.add(primera);
                 break;
             }else{
                 Set<String> primerosPrimera = primeros(primera);
-                if(perteneceEpsilum(primerosPrimera)) primerosPrimera.remove("EPSILUM");
-                predicciones.addAll(primerosPrimera);
-                if(!st.hasMoreTokens()) predicciones.addAll(siguientes(regla.getPar_izq()));
+                if(perteneceEpsilum(primerosPrimera) || esEpsilum(primera)){
+                    primerosPrimera.remove("EPSILUM");
+                    predicciones.addAll(primerosPrimera);
+                    predicciones.addAll(siguientes(regla.getPar_izq()));
+                }else{
+                    predicciones.addAll(primerosPrimera);
+                }
+                //if(!st.hasMoreTokens()) predicciones.addAll(siguientes(regla.getPar_izq()));
             }
 
         }
@@ -276,67 +298,59 @@ public class AnalisisSintactico {
         Set<String> conPred = new HashSet<>();
         FileWriter fw = new FileWriter("Generado.java",true);
         PrintWriter pw = new PrintWriter(fw);
-        pw.println("class Generado{");
         for(int i=0;i<this.reglas.size();i++){
             if(!esta(this.reglas.get(i).getPar_izq(), reglasAc)){
                 reglasAc.add(this.reglas.get(i).getPar_izq());
                 reglasList = producciones(this.reglas.get(i).getPar_izq());
-                pw.println("    public void "+this.reglas.get(i).getPar_izq()+"(Token token){");
+                pw.println("public void "+this.reglas.get(i).getPar_izq()+"(Token token){");
                 for(int j=0;j<reglasList.size();j++){
                     conPred= prediccion(reglasList.get(j));
-                    if(j<1){
-                        pw.print("        if(");
-                    }else{
-                        pw.print("        else if(");
-                    }
-                    for(String s: conPred){
-                        if(ac == conPred.size()-1){
-                            pw.print("token == "+'"'+s+'"');
-                            break;
+                    if(conPred.size()==0){
+                        break;
+                    }else {
+                        if(j<1){
+                            pw.print("    if(");
+                        }else{
+                            pw.print("    else if(");
                         }
-                        pw.print("token == "+'"'+s+'"'+"||");
-                        ac++;
+                        for(String s: conPred){
+                            if(ac == conPred.size()-1){
+                                pw.print("token.getLexema().equals("+'"'+s+'"'+')');
+                                break;
+                            }
+                            pw.print("token.getLexema().equals("+'"'+s+'"'+')'+" || ");
+                            ac++;
+                        }
+
+                        pw.print("){");
+                        pw.println();
+                        for(String s: conPred){
+                            pw.println("        this.tokensEsperados.add("+'"'+s+'"'+");");
+                        }
+                        StringTokenizer st = new StringTokenizer(reglasList.get(j).getPar_der());
+                        while(st.hasMoreTokens()){
+                            String primera = st.nextToken();
+                            if(esTerminal(primera) && !esEpsilum(primera)){
+                                pw.println("        emparejarToken("+'"'+primera+'"'+");");
+                            }else if(esEpsilum(primera)){
+                                pw.println();
+                            }else {
+                                pw.println("        "+primera+"(token);");
+                            }
+                        }
+                        pw.println("    }");
+                        ac=0;
                     }
-                    pw.print("){");
-                    pw.println();
-                    pw.println("        }");
-                    ac=0;
                 }
+                pw.println("    else{");
+                pw.println("        errorSintacticoToken(tokensEsperados, token.getLexema());");
+                pw.println("        this.tokensEsperados.clear();");
+                pw.println("    }");
+                pw.println("}");
             }
         }
-        pw.println("}");
         fw.close();
     }
-
-    public void analizar(){
-        /*Set<String> tokensEsperados = new HashSet<>();
-        if(this.tokens.isEmpty()){
-            tokensEsperados.add("END");
-            errorSintactico(tokensEsperados, "final del archivo");
-        }else {
-            int ac=0;
-            while(!this.tokens.isEmpty()){
-                Regla regla = this.reglas.get(ac);
-                Set<String> conPred = prediccion(regla);
-                StringTokenizer st = new StringTokenizer(this.reglas.get(ac).getPar_der());
-                String primera = st.nextToken();
-                if(perteneceConjuntoPrediccion(conPred, this.tokens.getFrontElement().getLexema())){
-                    if(esTerminal(primera))emparejar(primera);
-                    else{
-                        //falta realizar la derivacion cuando no es terminal
-                    }
-                    // revisar si tiene corchete o parentesis que son los opcionales
-                }else{
-                    tokensEsperados.addAll(conPred);
-                    errorSintactico(tokensEsperados, this.tokens.getFrontElement().getLexema());
-                    return;
-                }
-                ac++;
-            }
-        }
-        */
-    }
-
 
     public  void emparejar(String tokenEsperado){
         Set<String> tokensEsperados = new HashSet<>();
@@ -370,11 +384,15 @@ public class AnalisisSintactico {
     }
 
     public void errorSintactico(Set<String> tokensEsperados, String tokenLeido){
+        int ac=0;
         Set<String> valoresTokens = traducir(tokensEsperados);
         System.out.print("<"+this.tokens.getFrontElement().getFila()+":"+this.tokens.getFrontElement().getColumna()+"> Error sintatico: se encontro: '" + tokenLeido+"';se esperaba:");
         for(String v: valoresTokens){
-            System.out.print(v);
+            if(ac==valoresTokens.size())System.out.print("'"+v+"'.");
+            System.out.print("'"+v+"';");
+            ac++;
         }
+        System.exit(0);
     }
 
 }

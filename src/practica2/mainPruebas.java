@@ -14,10 +14,10 @@ public class mainPruebas {
         AnalisisSintactico as = new AnalisisSintactico(tokens);
         as.leerGramatica();
         //as.analizar();
-        as.generarFunciones();
+        //as.generarFunciones();
         //as.imprimirReglas();
         //as.imprimirPrimeros();
-        //as.imprimirSiguientes();
+        as.imprimirSiguientes();
         //as.imprimirPredicciones();
         /*Set<String> traducciones = as.traducir(tokensPrueba);
         for(String s: traducciones){

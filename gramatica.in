@@ -6,18 +6,18 @@ fn_decl_list f
 EPSILUM
 
 fn_decl_list:
-FUNCTION FID TK_DOSPUNTOS dataype TK_PAR_IZQ [var_decl] TK_PAR_DER [VAR var_decl TK_PUNTOYCOMA] stmt_block
+FUNCTION FID TK_DOSPUNTOS dataype TK_PAR_IZQ var_decl_op TK_PAR_DER list_var_decl stmt_block
 
-[var_decl]:
+var_decl_op:
 var_decl
 EPSILUM
 
-[VAR var_decl TK_PUNTOYCOMA]:
+list_var_decl:
 VAR var_decl TK_PUNTOYCOMA
 EPSILUM
 
 main_prog:
-[var_decl] st TK_END
+var_decl_op st END
 
 st:
 stmt_block st
@@ -77,19 +77,19 @@ TK_DECREMENTO TK_PUNTOYCOMA
 
 
 lexpr:
-nexpr [[TK_AND nexpr]*|[TK_OR nexpr]*]
+nexpr and_or_nexpr
 
-[[TK_AND nexpr]*|[TK_OR nexpr]*]:
-[TK_AND nexpr]*
-[TK_OR nexpr]*
+and_or_nexpr:
+and_nexpr
+or_nexpr
 EPSILUM
 
-[TK_AND nexpr]*:
-TK_AND nexpr [TK_AND nexpr]*
+and_nexpr:
+TK_AND nexpr and_nexpr
 EPSILUM
 
-[TK_OR nexpr]*:
-TK_OR nexpr [TK_OR nexpr]*
+or_nexpr:
+TK_OR nexpr or_nexpr
 EPSILUM
 
 nexpr:
@@ -97,9 +97,9 @@ TK_NOT TK_PAR_IZQ lexpr TK_PAR_DER
 rexpr
 
 rexpr:
-simple_expr [(TK_MENOR|TK_IGUALDAD|TK_MENOR_IGUAL|TK_MAYOR|TK_MAYOR_IGUAL|TK_DIFERENTE)simple_expr]
+simple_expr op_simple_expr
 
-[(TK_MENOR|TK_IGUALDAD|TK_MENOR_IGUAL|TK_MAYOR|TK_MAYOR_IGUAL|TK_DIFERENTE)simple_expr]:
+op_simple_expr:
 TK_MENOR simple_expr
 TK_IGUALDAD simple_expr
 TK_MENOR_IGUAL simple_expr
@@ -109,41 +109,41 @@ TK_DIFERENTE
 EPSILUM
 
 simple_expr:
-term [(TK_MAS|TK_MENOS)term]*
+term mas_menos_term
 
-[(TK_MAS|TK_MENOS)term]*:
-TK_MAS term [(TK_MAS|TK_MENOS)term]
-TK_MENOS term [(TK_MAS|TK_MENOS)term]
+mas_menos_term:
+TK_MAS term mas_menos_term
+TK_MENOS term mas_menos_term
 EPSILUM
 
 term:
-factor [(TK_MUL|TK_DIV|TK_MOD)factor]*
+factor op_factor
 
-[(TK_MUL|TK_DIV|TK_MOD)factor]*:
-TK_MUL factor [(TK_MUL|TK_DIV|TK_MOD)factor]*
-TK_DIV factor [(TK_MUL|TK_DIV|TK_MOD)factor]*
-TK_MOD factor [(TK_MUL|TK_DIV|TK_MOD)factor]*
+op_factor:
+TK_MUL factor op_factor
+TK_DIV factor op_factor
+TK_MOD factor op_factor
 EPSILUM
 
 factor:
 TK_NUM
 TRUE
 FALSE
-ID [TK_INCREMENTO|TK_DECREMENTO]
-[TK_INCREMENTO|TK_DECREMENTO] ID
+ID incremento_decremento
+incremento_decremento ID
 ID
 TK_PAR_IZQ lexpr TK_PAR_DER 
-FID TK_PAR_IZQ [lexpr[TK_COMA lexpr]*] TK_PAR_DER
+FID TK_PAR_IZQ con_lexpr TK_PAR_DER
 
-[TK_INCREMENTO|TK_DECREMENTO]:
+incremento_decremento:
 TK_INCREMENTO
 TK_DECREMENTO
 EPSILUM
 
-[lexpr[TK_COMA lexpr]*]:
-lexpr [TK_COMA lexpr]*
+con_lexpr:
+lexpr coma_lexpr
 EPSILUM
 
-[TK_COMA lexpr]*:
-TK_COMA lexpr [TK_COMA lexpr]*
+coma_lexpr:
+TK_COMA lexpr coma_lexpr
 EPSILUM
